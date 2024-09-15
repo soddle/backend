@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseInterceptors } from '@nestjs/common';
+import { Controller, Post, Body, UseInterceptors, Param, Get } from '@nestjs/common';
 import { GameService } from './game.service';
 import { RESPONSE_CONSTANT } from 'src/common/constants/response.constant';
 import { ResponseMessage } from 'src/common/decorators/response.decorator';
@@ -24,5 +24,10 @@ export class GameController {
   @Post('guess')
   async makeGuess(@Body() body: { sessionId: string; guess: any }) {
     return this.gameService.makeGuess(body.sessionId, body.guess);
+  }
+
+  @Get('/:sessionId')
+  async getGame(@Param('sessionId') sessionId: string) {
+    return this.gameService.getCurrentGameSession(sessionId);
   }
 }
