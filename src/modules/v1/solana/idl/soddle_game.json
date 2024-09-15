@@ -1,0 +1,505 @@
+{
+  "address": "2s6ZwgHDs31jPwM2AHwLRQhqcDuAQXY5zSLF3ZceQrMC",
+  "metadata": {
+    "name": "soddle_game",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "end_competition",
+      "discriminator": [
+        53,
+        190,
+        110,
+        195,
+        68,
+        190,
+        52,
+        153
+      ],
+      "accounts": [
+        {
+          "name": "game_state",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_game",
+      "discriminator": [
+        44,
+        62,
+        102,
+        247,
+        126,
+        208,
+        130,
+        215
+      ],
+      "accounts": [
+        {
+          "name": "game_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "start_game_session",
+      "discriminator": [
+        49,
+        83,
+        50,
+        242,
+        63,
+        141,
+        244,
+        21
+      ],
+      "accounts": [
+        {
+          "name": "game_state",
+          "writable": true
+        },
+        {
+          "name": "game_session",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101,
+                  95,
+                  115,
+                  101,
+                  115,
+                  115,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "player"
+              }
+            ]
+          }
+        },
+        {
+          "name": "player",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "game_type",
+          "type": "u8"
+        },
+        {
+          "name": "kol",
+          "type": {
+            "defined": {
+              "name": "KOL"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "submit_score",
+      "discriminator": [
+        212,
+        128,
+        45,
+        22,
+        112,
+        82,
+        85,
+        235
+      ],
+      "accounts": [
+        {
+          "name": "game_session",
+          "writable": true
+        },
+        {
+          "name": "player",
+          "signer": true,
+          "relations": [
+            "game_session"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "score",
+          "type": "u32"
+        },
+        {
+          "name": "guesses",
+          "type": "u32"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "GameSession",
+      "discriminator": [
+        150,
+        116,
+        20,
+        197,
+        205,
+        121,
+        220,
+        240
+      ]
+    },
+    {
+      "name": "GameState",
+      "discriminator": [
+        144,
+        94,
+        208,
+        172,
+        248,
+        99,
+        134,
+        120
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "TweetGuessEvent",
+      "discriminator": [
+        106,
+        218,
+        51,
+        220,
+        57,
+        71,
+        34,
+        78
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "GameSessionNotEnded",
+      "msg": "Game session cannot be ended yet"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidCompetition",
+      "msg": "Invalid competition"
+    },
+    {
+      "code": 6002,
+      "name": "MaxGuessesReachedForGame1",
+      "msg": "Maximum number of guesses reached"
+    },
+    {
+      "code": 6003,
+      "name": "MaxGuessesReachedForGame2",
+      "msg": "Maximum number of guesses reached"
+    },
+    {
+      "code": 6004,
+      "name": "MaxGuessesReachedForGame3",
+      "msg": "Maximum number of guesses reached"
+    },
+    {
+      "code": 6005,
+      "name": "InvalidKOLCount",
+      "msg": "Invalid number of KOLs. Expected 20."
+    },
+    {
+      "code": 6006,
+      "name": "InvalidGameType",
+      "msg": "Invalid game type. Must be 1, 2, or 3."
+    },
+    {
+      "code": 6007,
+      "name": "GameAlreadyPlayed",
+      "msg": "Game has already been played today."
+    },
+    {
+      "code": 6008,
+      "name": "GameAlreadyCompleted",
+      "msg": "Game session is already completed."
+    },
+    {
+      "code": 6009,
+      "name": "InvalidGuessIndex",
+      "msg": "Invalid guess index."
+    },
+    {
+      "code": 6010,
+      "name": "CompetitionNotEnded",
+      "msg": "Competition has not ended yet."
+    },
+    {
+      "code": 6011,
+      "name": "GameNotCompleted",
+      "msg": "Game is not completed yet."
+    }
+  ],
+  "types": [
+    {
+      "name": "Competition",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "string"
+          },
+          {
+            "name": "start_time",
+            "type": "i64"
+          },
+          {
+            "name": "end_time",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GameSession",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "player",
+            "type": "pubkey"
+          },
+          {
+            "name": "game_type",
+            "type": "u8"
+          },
+          {
+            "name": "start_time",
+            "type": "i64"
+          },
+          {
+            "name": "game_1_completed",
+            "type": "bool"
+          },
+          {
+            "name": "game_2_completed",
+            "type": "bool"
+          },
+          {
+            "name": "game_1_score",
+            "type": "u32"
+          },
+          {
+            "name": "game_2_score",
+            "type": "u32"
+          },
+          {
+            "name": "game_1_guesses_count",
+            "type": "u32"
+          },
+          {
+            "name": "game_2_guesses_count",
+            "type": "u32"
+          },
+          {
+            "name": "total_score",
+            "type": "u32"
+          },
+          {
+            "name": "target_index",
+            "type": "u8"
+          },
+          {
+            "name": "completed",
+            "type": "bool"
+          },
+          {
+            "name": "score",
+            "type": "u32"
+          },
+          {
+            "name": "deposit",
+            "type": "u64"
+          },
+          {
+            "name": "kol",
+            "type": {
+              "defined": {
+                "name": "KOL"
+              }
+            }
+          },
+          {
+            "name": "competition_id",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GameState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "current_competition",
+            "type": {
+              "defined": {
+                "name": "Competition"
+              }
+            }
+          },
+          {
+            "name": "last_update_time",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "KOL",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "age",
+            "type": "u8"
+          },
+          {
+            "name": "country",
+            "type": "string"
+          },
+          {
+            "name": "pfp",
+            "type": "string"
+          },
+          {
+            "name": "account_creation",
+            "type": "u16"
+          },
+          {
+            "name": "followers",
+            "type": "u32"
+          },
+          {
+            "name": "ecosystem",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TweetGuessEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "kol_id",
+            "type": "u32"
+          },
+          {
+            "name": "tweet",
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ]
+}
