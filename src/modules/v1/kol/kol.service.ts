@@ -18,9 +18,9 @@ export class KolService {
   }
 
   async getRandomKol(): Promise<Kol> {
-    const count = await this.kolModel.countDocuments();
-    const random = Math.floor(Math.random() * count);
-    return await this.kolModel.findOne().skip(random).exec();
+    const aggregation = [{ $sample: { size: 1 } }];
+    const [randomKol] = await this.kolModel.aggregate(aggregation);
+    return randomKol;
   }
 
   async getRandomTweet(kolId: string): Promise<{ kol: Kol; tweet: string }> {
@@ -32,9 +32,13 @@ export class KolService {
       throw new HttpException('KOL not found', HttpStatus.NOT_FOUND);
     }
     if (!kol.tweets || kol.tweets.length === 0) {
-      throw new HttpException('No tweets found for this KOL', HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        'No tweets found for this KOL',
+        HttpStatus.NOT_FOUND,
+      );
     }
-    const randomTweet = kol.tweets[Math.floor(Math.random() * kol.tweets.length)];
+    const randomTweet =
+      kol.tweets[Math.floor(Math.random() * kol.tweets.length)];
     return { kol, tweet: randomTweet };
   }
 }

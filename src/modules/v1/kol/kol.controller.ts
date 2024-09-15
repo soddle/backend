@@ -1,10 +1,17 @@
-import { Controller, Get, Post, Body, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { KolService } from './kol.service';
 import { Kol } from './kol.model';
 import { ResponseMessage } from '../../../common/decorators/response.decorator';
 import { RESPONSE_CONSTANT } from '../../../common/constants/response.constant';
 
-@Controller('kol')
+@Controller('kols')
 export class KolController {
   constructor(private readonly kolService: KolService) {}
 
@@ -42,7 +49,7 @@ export class KolController {
     return this.modifyData(kol);
   }
 
-  @Post('random-tweet')
+  @Get('tweet')
   @ResponseMessage(RESPONSE_CONSTANT.KOL.GET_RANDOM_TWEET_SUCCESS)
   async getRandomTweet(@Body('kolId') kolId: string) {
     if (!kolId) {
