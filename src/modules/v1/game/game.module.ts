@@ -5,10 +5,17 @@ import { GameController } from './game.controller';
 import { Game, GameDocument, GameSchema } from './game.model';
 import { SolanaModule } from '../solana/solana.module';
 import { KolModule } from '../kol/kol.module';
+import { User, UserSchema } from './schemas/user.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Game.name, schema: GameSchema }]),
+    MongooseModule.forFeature([
+      { name: Game.name, schema: GameSchema },
+      {
+        name: User.name,
+        schema: UserSchema,
+      },
+    ]),
     SolanaModule,
     KolModule,
   ],

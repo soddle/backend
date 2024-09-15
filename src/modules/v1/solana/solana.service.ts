@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Connection, PublicKey, Keypair } from '@solana/web3.js';
+import { Connection, PublicKey, Keypair, SystemProgram } from '@solana/web3.js';
 import {
   Program,
   AnchorProvider,
@@ -63,6 +63,7 @@ export class SolanaService {
 
   async submitScore(
     playerPublicKey: string,
+    gameType: number,
     score: number,
     guesses: number,
   ): Promise<string> {
@@ -73,19 +74,16 @@ export class SolanaService {
       [Buffer.from('game_session'), player.toBuffer()],
       this.program.programId,
     );
-    const [authorityPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from('authority')],
-      this.program.programId,
-    );
-
     try {
       const tx = await this.program.methods
-        .submitScore(score, guesses)
+        .submitScore(gameType, score, guesses)
         .accounts({
           gameSession: gameSessionPDA,
           player: player,
-          authority: authorityPDA,
+          authority: this.wallet.publicKey, // Use the wallet's public key instead of PDA
+          systemProgram: SystemProgram.programId,
         })
+        .signers([this.wallet.payer]) // Add the wallet as a signer
         .rpc();
 
       console.log('Final score submitted. Transaction signature:', tx);

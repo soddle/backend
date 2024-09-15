@@ -6,47 +6,83 @@ import { KolService } from '../kol/kol.service';
 import { Game, GameDocument } from './game.model';
 import { AttributeResult, KOL } from './game.type';
 import { KOLDocument } from '../kol/kol.model';
+import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()
 export class GameService {
   constructor(
     @InjectModel(Game.name) private gameModel: Model<GameDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
     private solanaService: SolanaService,
   ) {}
 
   async startGame(playerPublicKey: string, body: any) {
-    // JSON object for testing startGame function
+    let user = await this.userModel.findOne({ publicKey: playerPublicKey });
 
-    const newSession = new this.gameModel({
-      player: playerPublicKey,
-      gameType: body.gameType,
-      startTime: body.startTime,
-      game1Completed: body.game1Completed,
-      game2Completed: body.game2Completed,
-      game1Score: body.game1Score,
-      game2Score: body.game2Score,
-      game1Guesses: body.game1Guesses,
-      game2Guesses: body.game2Guesses,
-      totalScore: body.totalScore,
-      completed: body.completed,
-      score: body.score,
-      kol: body.kol,
-      competitionId: body.competitionId,
-      guesses: body.guesses,
-    });
+    if (!user) {
+      user = new this.userModel({
+        publicKey: playerPublicKey,
+        currentGameSession: null,
+      });
+      await user.save();
+    }
 
-    await newSession.save();
+    let currentSession;
+    if (user.currentGameSession) {
+      currentSession = await this.gameModel.findById(user.currentGameSession);
+    }
 
-    return newSession;
+    if (!currentSession || currentSession.completed) {
+      const newSession = new this.gameModel({
+        player: playerPublicKey,
+        gameType: body.gameType,
+        startTime: body.startTime,
+        game1Completed: body.game1Completed || false,
+        game2Completed: body.game2Completed || false,
+        game1Score: body.game1Score || 0,
+        game2Score: body.game2Score || 0,
+        game1Guesses: body.game1Guesses || [],
+        game2Guesses: body.game2Guesses || [],
+        totalScore: body.totalScore || 0,
+        completed: body.completed || false,
+        score: body.score || 0,
+        kol: body.kol || null,
+        competitionId: body.competitionId || null,
+        guesses: body.guesses || [],
+      });
+      await newSession.save();
+      user.currentGameSession = newSession.id.toString();
+      await user.save();
+      currentSession = newSession;
+    } else {
+      if (body.gameType === 1) {
+        currentSession.game1Completed = false;
+        currentSession.game1Score = 0;
+        currentSession.game1Guesses = [];
+      } else if (body.gameType === 2) {
+        currentSession.game2Completed = false;
+        currentSession.game2Score = 0;
+        currentSession.game2Guesses = [];
+      }
+      currentSession.gameType = body.gameType;
+      currentSession.startTime = new Date();
+      await currentSession.save();
+    }
+
+    return currentSession;
   }
 
-  async makeGuess(sessionId: string, guess: any) {
+  async makeGuess(gameType: number, userPublicKey: string, guess: any) {
+    const user = await this.userModel.findOne({ publicKey: userPublicKey });
+    if (!user || !user.currentGameSession) {
+      throw new Error('User has no active game session');
+    }
+    const sessionId = user.currentGameSession;
     const session = await this.gameModel.findById(sessionId);
     if (!session || session.completed) {
       throw new Error('Invalid or completed game session');
     }
 
-    const gameType = session.gameType;
     const guessesField =
       gameType === 1 ? 'game1GuessesCount' : 'game2GuessesCount';
     const scoreField = gameType === 1 ? 'game1Score' : 'game2Score';
@@ -62,6 +98,7 @@ export class GameService {
     try {
       await this.solanaService.submitScore(
         session.player,
+        gameType,
         session[scoreField],
         session[guessesField],
       );
