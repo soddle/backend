@@ -38,6 +38,11 @@ export class GameController {
       body.guess,
     );
   }
+  @Post('/user')
+  @ResponseMessage(RESPONSE_CONSTANT.USER.GET_USER_DETAILS_SUCCESS)
+  async getUserDetails(@Body('publicKey') publicKey: string) {
+    return this.gameService.getUserDetails(publicKey);
+  }
 
   @Get('/:sessionId')
   @ResponseMessage(RESPONSE_CONSTANT.GAME.GET_GAME_SUCCESS)

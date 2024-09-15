@@ -72,6 +72,12 @@ export class GameService {
     return currentSession;
   }
 
+  async getUserDetails(publicKey: string) {
+    return this.userModel.findOne({
+      publicKey,
+    });
+  }
+
   async makeGuess(gameType: number, userPublicKey: string, guess: any) {
     const user = await this.userModel.findOne({ publicKey: userPublicKey });
     if (!user || !user.currentGameSession) {
@@ -155,12 +161,27 @@ export class GameService {
 
     session.completed = session.game1Completed && session.game2Completed;
   }
+  getFollowerCountFromLabel(label: string): number {
+    switch (label) {
+      case 'over 5M':
+        return 5000000;
+      case '3-5M':
+        return 4000000; // Assuming the midpoint of the range
+      case '1-3M':
+        return 2000000; // Assuming the midpoint of the range
+      case '500k-1M':
+        return 750000; // Assuming the midpoint of the range
+      default:
+        return 250000; // Assuming the midpoint of the range '0-500k'
+    }
+  }
 
   private evaluateGuess(
     actual: KOLDocument,
     guess: KOLDocument,
     gameType: number,
   ): Record<string, AttributeResult> | { kol: KOLDocument; result: boolean } {
+    
     if (gameType === 1) {
       return {
         name:

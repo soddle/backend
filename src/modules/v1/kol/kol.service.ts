@@ -2,6 +2,7 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Kol, KOLDocument } from './kol.model';
+import { dailyKols } from 'src/common/utils/kols';
 
 @Injectable()
 export class KolService {
@@ -9,12 +10,39 @@ export class KolService {
 
   async addKOLsToDB() {
     // const newKols = [/* array of new KOL data */];
-    // return await this.kolModel.insertMany(newKols);
-    return 'KOLs added to the database';
+    await this.kolModel.deleteMany({});
+    return await this.kolModel.insertMany(dailyKols);
   }
 
-  async findAll(): Promise<Kol[]> {
-    return await this.kolModel.find().exec();
+  modifyData(oldData) {
+    return {
+      id: oldData._id,
+      name: oldData.name,
+      age: oldData.age,
+      ageDisplay: `${Math.floor(oldData.age / 10) * 10 + 1}-${Math.floor(oldData.age / 10) * 10 + 10}`,
+      country: oldData.country,
+      pfpType:
+        oldData.pfpType === 'both' ? 'Artificial-Human' : oldData.pfpType,
+      pfp: oldData.pfp,
+      accountCreation: oldData.accountCreation,
+      followers: oldData.followers,
+      followersDisplay: this.getFollowerRangeLabel(oldData.followers),
+      ecosystem: oldData.ecosystem,
+      tweets: oldData.tweets,
+    };
+  }
+  getFollowerRangeLabel(followersCount: number): string {
+    if (followersCount >= 5000000) return 'over 5M';
+    if (followersCount >= 3000000 && followersCount <= 5000000) return '3-5M';
+    if (followersCount >= 1000000 && followersCount < 3000000) return '1-3M';
+    if (followersCount >= 500000 && followersCount < 1000000) return '500k-1M';
+    return '0-500k';
+  }
+
+  async findAll(): Promise<any[]> {
+    const newKols = await this.kolModel.find().exec();
+    const kols = newKols.map((kol) => this.modifyData(kol));
+    return kols;
   }
 
   async getRandomKol(): Promise<Kol> {
