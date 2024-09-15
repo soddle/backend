@@ -18,6 +18,9 @@ export class Kol extends Document {
   pfp: string;
 
   @Prop({ required: true })
+  pfpType: string;
+
+  @Prop({ required: true })
   accountCreation: number;
 
   @Prop({ required: true })

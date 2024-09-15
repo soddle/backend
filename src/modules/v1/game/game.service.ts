@@ -181,7 +181,6 @@ export class GameService {
     guess: KOLDocument,
     gameType: number,
   ): Record<string, AttributeResult> | { kol: KOLDocument; result: boolean } {
-    
     if (gameType === 1) {
       return {
         name:
@@ -198,10 +197,11 @@ export class GameService {
           actual.country === guess.country
             ? AttributeResult.Correct
             : AttributeResult.Incorrect,
-        pfp:
-          actual.pfp === guess.pfp
+        pfpType:
+          actual.pfpType === guess.pfpType
             ? AttributeResult.Correct
             : AttributeResult.Incorrect,
+
         account_creation:
           actual.accountCreation === guess.accountCreation
             ? AttributeResult.Correct
