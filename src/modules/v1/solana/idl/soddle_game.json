@@ -8,48 +8,6 @@
   },
   "instructions": [
     {
-      "name": "end_competition",
-      "discriminator": [
-        53,
-        190,
-        110,
-        195,
-        68,
-        190,
-        52,
-        153
-      ],
-      "accounts": [
-        {
-          "name": "game_state",
-          "writable": true
-        },
-        {
-          "name": "authority",
-          "signer": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  97,
-                  117,
-                  116,
-                  104,
-                  111,
-                  114,
-                  105,
-                  116,
-                  121
-                ]
-              }
-            ]
-          }
-        }
-      ],
-      "args": []
-    },
-    {
       "name": "initialize_game",
       "discriminator": [
         44,
@@ -204,14 +162,23 @@
           "writable": true
         },
         {
-          "name": "player",
-          "signer": true,
-          "relations": [
-            "game_session"
-          ]
+          "name": "player"
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
+        {
+          "name": "game_type",
+          "type": "u8"
+        },
         {
           "name": "score",
           "type": "u32"
@@ -326,6 +293,11 @@
       "code": 6011,
       "name": "GameNotCompleted",
       "msg": "Game is not completed yet."
+    },
+    {
+      "code": 6012,
+      "name": "InvalidPlayer",
+      "msg": "This player is invalid"
     }
   ],
   "types": [

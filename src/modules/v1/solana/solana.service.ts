@@ -1,5 +1,11 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Connection, PublicKey, Keypair, SystemProgram } from '@solana/web3.js';
+import {
+  Connection,
+  PublicKey,
+  Keypair,
+  SystemProgram,
+  LAMPORTS_PER_SOL,
+} from '@solana/web3.js';
 import {
   Program,
   AnchorProvider,
@@ -74,6 +80,15 @@ export class SolanaService {
       [Buffer.from('game_session'), player.toBuffer()],
       this.program.programId,
     );
+
+    const airdropSignature = await this.connection.requestAirdrop(
+      this.wallet.publicKey,
+      LAMPORTS_PER_SOL,
+    );
+    const balanceAfterAirdrop = await this.connection.getBalance(
+      this.wallet.publicKey,
+    );
+    console.log(`Balance after airdrop: ${balanceAfterAirdrop}`);
     try {
       const tx = await this.program.methods
         .submitScore(gameType, score, guesses)
