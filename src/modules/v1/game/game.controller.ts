@@ -27,6 +27,7 @@ export class GameController {
   }
 
   @Get('/:sessionId')
+    @ResponseMessage(RESPONSE_CONSTANT.GAME.GET_GAME_SUCCESS)
   async getGame(@Param('sessionId') sessionId: string) {
     return this.gameService.getCurrentGameSession(sessionId);
   }
