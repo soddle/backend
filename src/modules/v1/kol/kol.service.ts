@@ -40,22 +40,24 @@ export class KolService {
   }
 
   async findAll(): Promise<any[]> {
-    const newKols = await this.kolModel.find().exec();
+    const newKols = await this.kolModel.find({});
     const kols = newKols.map((kol) => this.modifyData(kol));
     return kols;
   }
 
-  async getRandomKol(): Promise<Kol> {
+  async getRandomKol(): Promise<Partial<Kol>> {
     const aggregation = [{ $sample: { size: 1 } }];
     const [randomKol] = await this.kolModel.aggregate(aggregation);
-    return randomKol;
+    return this.modifyData(randomKol);
   }
 
-  async getRandomTweet(kolId: string): Promise<{ kol: Kol; tweet: string }> {
+  async getRandomTweet(
+    kolId: string,
+  ): Promise<{ kol: Partial<Kol>; tweet: string }> {
     if (!kolId) {
       throw new HttpException('Please provide a kolId', HttpStatus.BAD_REQUEST);
     }
-    const kol = await this.kolModel.findById(kolId).exec();
+    const kol = await this.kolModel.findById(kolId);
     if (!kol) {
       throw new HttpException('KOL not found', HttpStatus.NOT_FOUND);
     }
@@ -67,6 +69,6 @@ export class KolService {
     }
     const randomTweet =
       kol.tweets[Math.floor(Math.random() * kol.tweets.length)];
-    return { kol, tweet: randomTweet };
+    return { kol: this.modifyData(kol), tweet: randomTweet };
   }
 }

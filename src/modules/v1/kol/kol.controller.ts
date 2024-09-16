@@ -15,20 +15,6 @@ import { RESPONSE_CONSTANT } from '../../../common/constants/response.constant';
 export class KolController {
   constructor(private readonly kolService: KolService) {}
 
-  private modifyData(oldData: Kol) {
-    return {
-      id: oldData._id,
-      name: oldData.name,
-      age: oldData.age,
-      country: oldData.country,
-      pfp: oldData.pfp,
-      accountCreation: oldData.accountCreation,
-      followers: oldData.followers,
-      ecosystem: oldData.ecosystem,
-      tweets: oldData.tweets,
-    };
-  }
-
   @Post('add')
   @ResponseMessage(RESPONSE_CONSTANT.KOL.ADD_KOLS_SUCCESS)
   async addKOLsToDB() {
@@ -38,15 +24,13 @@ export class KolController {
   @Get()
   @ResponseMessage(RESPONSE_CONSTANT.KOL.GET_ALL_KOLS_SUCCESS)
   async getAllKols() {
-    const newKols = await this.kolService.findAll();
-    return newKols.map((kol) => this.modifyData(kol));
+    return await this.kolService.findAll();
   }
 
   @Get('random')
   @ResponseMessage(RESPONSE_CONSTANT.KOL.GET_RANDOM_KOL_SUCCESS)
   async getRandomKol() {
-    const kol = await this.kolService.getRandomKol();
-    return this.modifyData(kol);
+    return await this.kolService.getRandomKol();
   }
 
   @Get('tweet')
@@ -57,7 +41,7 @@ export class KolController {
     }
     const { kol, tweet } = await this.kolService.getRandomTweet(kolId);
     return {
-      kol: this.modifyData(kol),
+      kol,
       tweet: tweet,
     };
   }
