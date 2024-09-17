@@ -247,7 +247,13 @@ export class GameService {
     throw new NotFoundException('Invalid game type');
   }
 
-  async getCurrentGameSession(sessionId: string): Promise<GameDocument | null> {
-    return this.gameModel.findById(sessionId).exec();
+  async getCurrentGameSession(publicKey: string): Promise<GameDocument | null> {
+    const user = await this.userModel.findOne({ publicKey });
+    if (!user || !user.currentGameSession) {
+      throw new NotFoundException('User has no active game session');
+    }
+    const sessionId = user.currentGameSession;
+    const session = await this.gameModel.findById(sessionId);
+    return session;
   }
 }

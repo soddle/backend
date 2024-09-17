@@ -83,13 +83,27 @@ export class SolanaService {
     guesses: number,
   ): Promise<string> {
     const player = new PublicKey(playerPublicKey);
-
+    try {
+      const accountInfo = await this.connection.getAccountInfo(
+        new PublicKey('4h2gPKxNycXwPqUbfZyZ6yaDcs6RRL7pFnaBKztJbX74'),
+      );
+      if (accountInfo === null) {
+        console.error('Account does not exist');
+      } else if (accountInfo.data.length === 0) {
+        console.error('Account exists but has no data');
+      } else {
+        // Process the account data
+        console.log('Account data:', accountInfo.data);
+      }
+    } catch (error) {
+      console.error('Error fetching account info:', error);
+    }
     // Derive PDAs
     const [gameSessionPDA] = PublicKey.findProgramAddressSync(
       [Buffer.from('game_session'), player.toBuffer()],
       this.program.programId,
     );
-
+    console.log(gameSessionPDA);
     const airdropSignature = await this.connection.requestAirdrop(
       this.wallet.publicKey,
       LAMPORTS_PER_SOL,

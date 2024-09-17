@@ -44,9 +44,9 @@ export class GameController {
     return this.gameService.getUserDetails(publicKey);
   }
 
-  @Get('/:sessionId')
+  @Get('/:publicKey')
   @ResponseMessage(RESPONSE_CONSTANT.GAME.GET_GAME_SUCCESS)
-  async getGame(@Param('sessionId') sessionId: string) {
-    return this.gameService.getCurrentGameSession(sessionId);
+  async getGame(@Param('publicKey') publicKey: string) {
+    return this.gameService.getCurrentGameSession(publicKey);
   }
 }
