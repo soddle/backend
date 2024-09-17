@@ -44,8 +44,9 @@ export class SolanaService {
     this.program = new Program(idl, provider);
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-  async initializeGame() {
+  @Cron('0 */24 * * *')
+  async handleCron() {
+    console.log('Called every day at midnight');
     const [gameStatePDA] = PublicKey.findProgramAddressSync(
       [Buffer.from('game_state')],
       this.program.programId,
