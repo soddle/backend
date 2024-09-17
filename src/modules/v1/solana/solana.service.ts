@@ -1,4 +1,9 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  OnModuleInit,
+} from '@nestjs/common';
 import {
   Connection,
   PublicKey,
@@ -64,7 +69,10 @@ export class SolanaService {
 
       console.log('Game initialized. Transaction signature:', tx);
     } catch (error) {
-      console.error('Error initializing game:', error);
+      throw new HttpException(
+        'Error initializing game:',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -105,8 +113,11 @@ export class SolanaService {
       console.log('Final score submitted. Transaction signature:', tx);
       return tx;
     } catch (error) {
-      console.error('Error submitting final score:', error);
-      throw error;
+      console.log(error);
+      throw new HttpException(
+        'Error submitting final score:',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

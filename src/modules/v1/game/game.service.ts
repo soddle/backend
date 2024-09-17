@@ -1,4 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { SolanaService } from '../solana/solana.service';
@@ -81,14 +87,23 @@ export class GameService {
   async makeGuess(gameType: number, userPublicKey: string, guess: any) {
     const user = await this.userModel.findOne({ publicKey: userPublicKey });
     if (!user || !user.currentGameSession) {
-      throw new Error('User has no active game session');
+      throw new NotFoundException('User has no active game session');
     }
     const sessionId = user.currentGameSession;
     const session = await this.gameModel.findById(sessionId);
-    if (!session || session.game1Completed || session.game2Completed) {
-      throw new Error('Invalid or completed game session');
+    console.log('session', session);
+    if (!session) {
+      throw new ConflictException('Invalid or completed game session');
     }
-
+    if (session.gameType === 1 && session.game1Completed) {
+      throw new ConflictException(
+        `Game session for Game ${gameType} already completed`,
+      );
+    } else if (session.gameType === 2 && session.game2Completed) {
+      throw new ConflictException(
+        `Game session for Game ${gameType} already completed`,
+      );
+    }
     const guessesField =
       gameType === 1 ? 'game1GuessesCount' : 'game2GuessesCount';
     const scoreField = gameType === 1 ? 'game1Score' : 'game2Score';
@@ -109,7 +124,11 @@ export class GameService {
         session[guessesField],
       );
     } catch (error) {
-      console.error('Failed to submit score to blockchain:', error);
+      console.log(error);
+      throw new HttpException(
+        'Failed to submit score to blockchain:',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
 
     return session;
@@ -225,7 +244,7 @@ export class GameService {
         result: actual.id === guess.id,
       };
     }
-    throw new Error('Invalid game type');
+    throw new NotFoundException('Invalid game type');
   }
 
   async getCurrentGameSession(sessionId: string): Promise<GameDocument | null> {
