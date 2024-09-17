@@ -85,7 +85,7 @@ export class GameService {
     }
     const sessionId = user.currentGameSession;
     const session = await this.gameModel.findById(sessionId);
-    if (!session || session.completed) {
+    if (!session || session.game1Completed || session.game2Completed) {
       throw new Error('Invalid or completed game session');
     }
 
