@@ -41,7 +41,7 @@ export class GameService {
     if (!currentSession || currentSession.completed) {
       const newSession = new this.gameModel({
         player: playerPublicKey,
-        gameType: body.game.gameType,
+        gameType: body.gameType,
         startTime: body.startTime,
         game1Completed: body.game1Completed || false,
         game2Completed: body.game2Completed || false,
@@ -143,9 +143,7 @@ export class GameService {
     const guessesField = gameType === 1 ? 'game1Guesses' : 'game2Guesses';
     const guessesCountField =
       gameType === 1 ? 'game1GuessesCount' : 'game2GuessesCount';
-    console.log(session[guessesField].length);
     session[guessesField].push({ guess, result });
-    console.log(session[guessesField].length);
     session[guessesCountField]++;
   }
 
@@ -160,8 +158,10 @@ export class GameService {
 
     session[scoreField] = Math.max(
       0,
-      session[scoreField] - timePenalty - guessPenalty,
+      session[scoreField] - timePenalty - guessPenalty, // Negative score not allowed
     );
+    console.log(timePenalty);
+    console.log(session[guessesField], session[scoreField]);
     session.totalScore = session.game1Score + session.game2Score;
   }
 
