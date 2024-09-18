@@ -63,11 +63,11 @@ export class GameService {
     } else {
       if (body.gameType === 1) {
         currentSession.game1Completed = false;
-        currentSession.game1Score = 0;
+        currentSession.game1Score = 1000;
         currentSession.game1Guesses = [];
       } else if (body.gameType === 2) {
         currentSession.game2Completed = false;
-        currentSession.game2Score = 0;
+        currentSession.game2Score = 1000;
         currentSession.game2Guesses = [];
       }
       currentSession.gameType = body.gameType;
