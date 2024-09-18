@@ -83,24 +83,31 @@ export class SolanaService {
     guesses: number,
   ): Promise<string> {
     const player = new PublicKey(playerPublicKey);
-    try {
-      const accountInfo = await this.connection.getAccountInfo(
-        new PublicKey('4h2gPKxNycXwPqUbfZyZ6yaDcs6RRL7pFnaBKztJbX74'),
-      );
-      if (accountInfo === null) {
-        console.error('Account does not exist');
-      } else if (accountInfo.data.length === 0) {
-        console.error('Account exists but has no data');
-      } else {
-        // Process the account data
-        console.log('Account data:', accountInfo.data);
-      }
-    } catch (error) {
-      console.error('Error fetching account info:', error);
-    }
+
+    type GameState = {
+      currentCompetition: {
+        id: string;
+        startTime: number;
+        endTime: number;
+      };
+      lastUpdateTime: number;
+    };
     // Derive PDAs
+    const [gameStatePDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from('game_state')],
+      this.program.programId,
+    );
+    //@ts-expect-error  description of the error
+    const gameState = (await this.program.account.gameState.fetch(
+      gameStatePDA,
+    ))
+
     const [gameSessionPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from('game_session'), player.toBuffer()],
+      [
+        Buffer.from('game_session'),
+        player.toBuffer(),
+        Buffer.from(gameState.currentCompetition.id),
+      ],
       this.program.programId,
     );
     console.log(gameSessionPDA);

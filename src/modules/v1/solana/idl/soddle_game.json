@@ -1,5 +1,5 @@
 {
-  "address": "BjNgAHKkzafWFwn2kK9Uvuzu6ZQw4eSdcXpV4sUq1bLe",
+  "address": "9oHdf9UFE9zbQPUDiBn27qX9Rqc7fVEpHSdxVpkwx6z4",
   "metadata": {
     "name": "soddle_game",
     "version": "0.1.0",
@@ -97,6 +97,11 @@
               {
                 "kind": "account",
                 "path": "player"
+              },
+              {
+                "kind": "account",
+                "path": "game_state.current_competition.id",
+                "account": "GameState"
               }
             ]
           }
