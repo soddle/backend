@@ -131,7 +131,6 @@ export class GameService {
 
       return updatedSession;
     } catch (error) {
-      console.error('Error updating session or submitting score:', error);
       throw new HttpException(
         'Failed to update session or submit score to blockchain',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -161,6 +160,7 @@ export class GameService {
     // dividing by 60 seconds to get minutes, and then multiplying by 10.
     const timePenalty = Math.floor((Date.now() - session.startTime) / 60000);
     const guessPenalty = (session[guessesField] + 1) * 50; // +1 because we're adding a new guess
+    console.log(Date.now(), 'Date.now()');
     console.log(timePenalty, 'timePenalty');
     console.log(guessPenalty, 'guessPenalty');
 
@@ -200,10 +200,8 @@ export class GameService {
     );
 
     if (!updatedSession) {
-      throw new HttpException(
-        `Failed to update session for Game ${gameType}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      console.log('updated sessionid', updatedSession.id);
+      console.log('error', 'Failed to update session');
     }
 
     return updatedSession;
