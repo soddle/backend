@@ -105,8 +105,11 @@ export class GameService {
     }
 
     const guessesField =
-      gameType === 1 ? 'game1GuessesCount' : 'game2GuessesCount';
-    const scoreField = gameType === 1 ? 'game1Score' : 'game2Score';
+      gameType == 1 ? 'game1GuessesCount' : 'game2GuessesCount';
+
+    const scoreField = gameType == 1 ? 'game1Score' : 'game2Score';
+    console.log('guessesField', guessesField);
+    console.log('scoreField', scoreField);
     const result = this.evaluateGuess(session.kol, guess, gameType);
 
     try {
@@ -144,9 +147,15 @@ export class GameService {
     guessesField: string,
     scoreField: string,
   ) {
-    const guesses = gameType === 1 ? 'game1Guesses' : 'game2Guesses';
-    const completedField = gameType === 1 ? 'game1Completed' : 'game2Completed';
+    const guesses = gameType == 1 ? 'game1Guesses' : 'game2Guesses';
+    const completedField = gameType == 1 ? 'game1Completed' : 'game2Completed';
+    console.log('guesses', guesses);
+    console.log('completedField', completedField);
     const session = await this.gameModel.findById(sessionId);
+    if (!session) {
+      throw new NotFoundException('Game session not found');
+    }
+
     const timePenalty =
       Math.floor((Date.now() - session.startTime) / 60000) * 10;
     const guessPenalty = (session[guessesField] + 1) * 50; // +1 because we're adding a new guess
@@ -157,6 +166,7 @@ export class GameService {
             (r) => r === AttributeResult.Correct,
           )
         : (result as { result: boolean }).result;
+    console.log('isCompleted', isCompleted);
 
     const updatedSession = await this.gameModel.findByIdAndUpdate(
       sessionId,
