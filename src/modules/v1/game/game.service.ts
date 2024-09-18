@@ -90,129 +90,109 @@ export class GameService {
       throw new NotFoundException('User has no active game session');
     }
     const sessionId = user.currentGameSession;
+
     const session = await this.gameModel.findById(sessionId);
-    console.log('session', session);
     if (!session) {
       throw new ConflictException('Invalid or completed game session');
     }
-    if (session.gameType === 1 && session.game1Completed) {
-      throw new ConflictException(
-        `Game session for Game ${gameType} already completed`,
-      );
-    } else if (session.gameType === 2 && session.game2Completed) {
+    if (
+      (gameType === 1 && session.game1Completed) ||
+      (gameType === 2 && session.game2Completed)
+    ) {
       throw new ConflictException(
         `Game session for Game ${gameType} already completed`,
       );
     }
+
     const guessesField =
       gameType === 1 ? 'game1GuessesCount' : 'game2GuessesCount';
     const scoreField = gameType === 1 ? 'game1Score' : 'game2Score';
-
     const result = this.evaluateGuess(session.kol, guess, gameType);
 
-    const updateStuff = async (
-      session,
-      gameType,
-      guess,
-      result,
-      guessesField,
-      scoreField,
-    ) => {
-      try {
-        const guesses = gameType === 1 ? 'game1Guesses' : 'game2Guesses';
-        const guessLength = session[guesses].length;
-        await this.updateGuesses(session, gameType, guess, result);
-        // Check if the guess was successfully added to the session
-        console.log(guessLength, session.game1Guesses.length);
-        if (session[guesses]?.length !== guessLength + 1) {
-          throw new HttpException(
-            `Failed to add guess to session for Game ${gameType}. I don't know why`,
-            HttpStatus.INTERNAL_SERVER_ERROR,
-          );
-        }
-        await this.updateScore(session, guessesField, scoreField);
+    try {
+      const updatedSession = await this.updateSessionWithGuess(
+        sessionId,
+        gameType,
+        guess,
+        result,
+        guessesField,
+        scoreField,
+      );
 
-        await this.updateCompletionStatus(session, gameType, result, guess);
-      } catch (error) {
-        console.error('Error updating session:', error);
-        throw error;
-      }
-    };
-    await updateStuff(
-      session,
-      gameType,
-      guess,
-      result,
-      guessesField,
-      scoreField,
+      await this.solanaService.submitScore(
+        updatedSession.player,
+        gameType,
+        updatedSession[scoreField],
+        updatedSession[guessesField],
+      );
+
+      return updatedSession;
+    } catch (error) {
+      console.error('Error updating session or submitting score:', error);
+      throw new HttpException(
+        'Failed to update session or submit score to blockchain',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  private async updateSessionWithGuess(
+    sessionId: string,
+    gameType: number,
+    guess: any,
+    result: any,
+    guessesField: string,
+    scoreField: string,
+  ) {
+    const guesses = gameType === 1 ? 'game1Guesses' : 'game2Guesses';
+    const completedField = gameType === 1 ? 'game1Completed' : 'game2Completed';
+    const session = await this.gameModel.findById(sessionId);
+    const timePenalty =
+      Math.floor((Date.now() - session.startTime) / 60000) * 10;
+    const guessPenalty = (session[guessesField] + 1) * 50; // +1 because we're adding a new guess
+
+    const isCompleted =
+      gameType === 1
+        ? Object.values(result as Record<string, AttributeResult>).every(
+            (r) => r === AttributeResult.Correct,
+          )
+        : (result as { result: boolean }).result;
+
+    const updatedSession = await this.gameModel.findByIdAndUpdate(
+      sessionId,
+      {
+        $push: { [guesses]: { guess, result } },
+        $inc: { [guessesField]: 1 },
+        $set: {
+          [scoreField]: Math.max(
+            0,
+            session[scoreField] - timePenalty - guessPenalty,
+          ),
+          [completedField]: isCompleted,
+          completed:
+            gameType === 1
+              ? isCompleted && session.game2Completed
+              : session.game1Completed && isCompleted,
+          totalScore: Math.max(
+            0,
+            session.game1Score +
+              session.game2Score -
+              timePenalty -
+              guessPenalty,
+          ),
+        },
+      },
+      { new: true, runValidators: true },
     );
 
-    await session.save();
-
-    try {
-      await this.solanaService.submitScore(
-        session.player,
-        gameType,
-        session[scoreField],
-        session[guessesField],
-      );
-    } catch (error) {
-      console.error('Error submitting score to blockchain:', error);
+    if (!updatedSession) {
       throw new HttpException(
-        'Failed to submit score to blockchain:',
+        `Failed to update session for Game ${gameType}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
 
-    return session;
-  }
-
-  private async updateGuesses(
-    session: GameDocument,
-    gameType: number,
-    guess: any,
-    result: any,
-  ) {
-    const guessesField = gameType === 1 ? 'game1Guesses' : 'game2Guesses';
-    const guessesCountField =
-      gameType === 1 ? 'game1GuessesCount' : 'game2GuessesCount';
-    session[guessesField].push({ guess, result });
-    session[guessesCountField]++;
-  }
-
-  private async updateScore(
-    session: GameDocument,
-    guessesField: string,
-    scoreField: string,
-  ) {
-    const timePenalty =
-      Math.floor((Date.now() - session.startTime) / 60000) * 10;
-    const guessPenalty = session[guessesField] * 50;
-
-    session[scoreField] = Math.max(
-      0,
-      session[scoreField] - timePenalty - guessPenalty, // Negative score not allowed
-    );
-    console.log(timePenalty);
-    console.log(session[guessesField], session[scoreField]);
-    session.totalScore = session.game1Score + session.game2Score;
-  }
-
-  private async updateCompletionStatus(
-    session: GameDocument,
-    gameType: number,
-    result: any,
-    guess: any,
-  ) {
-    if (gameType === 1) {
-      session.game1Completed = Object.values(
-        result as Record<string, AttributeResult>,
-      ).every((r) => r === AttributeResult.Correct);
-    } else {
-      session.game2Completed = (result as { result: boolean }).result;
-    }
-
-    session.completed = session.game1Completed && session.game2Completed;
+    return updatedSession;
   }
   getFollowerCountFromLabel(label: string): number {
     switch (label) {
