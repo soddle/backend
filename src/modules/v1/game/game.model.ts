@@ -11,8 +11,8 @@ export class Game {
   @Prop({ required: true })
   gameType: number;
 
-  @Prop({ required: true })
-  startTime: number;
+  @Prop({ required: true, type: Date })
+  startTime: Date;
 
   @Prop({ required: true, default: false })
   game1Completed: boolean;
