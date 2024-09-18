@@ -41,7 +41,7 @@ export class GameService {
     if (!currentSession || currentSession.completed) {
       const newSession = new this.gameModel({
         player: playerPublicKey,
-        gameType: body.gameType,
+        gameType: body.game.gameType,
         startTime: body.startTime,
         game1Completed: body.game1Completed || false,
         game2Completed: body.game2Completed || false,
@@ -143,8 +143,9 @@ export class GameService {
     const guessesField = gameType === 1 ? 'game1Guesses' : 'game2Guesses';
     const guessesCountField =
       gameType === 1 ? 'game1GuessesCount' : 'game2GuessesCount';
-
+    console.log(session[guessesField].length);
     session[guessesField].push({ guess, result });
+    console.log(session[guessesField].length);
     session[guessesCountField]++;
   }
 
