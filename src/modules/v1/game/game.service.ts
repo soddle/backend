@@ -42,7 +42,7 @@ export class GameService {
       const newSession = new this.gameModel({
         player: playerPublicKey,
         gameType: body.gameType,
-        startTime: new Date(),
+        startTime: new Date(body.startTime),
         game1Completed: body.game1Completed || false,
         game2Completed: body.game2Completed || false,
         game1Score: body.game1Score || 0,
@@ -158,7 +158,9 @@ export class GameService {
     // Calculate the time penalty in points, based on the elapsed time since the game started.
     // The penalty is 10 points per minute, calculated by subtracting the game start time from the current time,
     // dividing by 60 seconds to get minutes, and then multiplying by 10.
-    const timePenalty = Math.floor((Date.now() - new Date(session.startTime).getTime()) / 60000);
+    const timePenalty = Math.floor(
+      (Date.now() - new Date(session.startTime).getTime()) / 60000,
+    );
     const guessPenalty = (session[guessesField] + 1) * 50; // +1 because we're adding a new guess
     console.log(Date.now(), 'Date.now()');
     console.log(timePenalty, 'timePenalty');
