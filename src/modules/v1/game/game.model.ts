@@ -25,9 +25,12 @@ export class Game {
 
   @Prop({ required: true, default: 0 })
   game2Score: number;
-  
-  @Prop({ type: [], required: true, default: [] })
-  game1Guesses: any[];
+
+  @Prop({
+    type: [{ type: Object, required: true }],
+    default: [],
+  })
+  game1Guesses: { guess: any; result: boolean }[];
 
   @Prop({ type: [], required: true, default: [] })
   game2Guesses: any[];
@@ -45,7 +48,7 @@ export class Game {
   completed: boolean;
 
   @Prop({ required: true, default: 0 })
-  score: number
+  score: number;
 
   @Prop({ type: Object, required: true })
   kol: any; // KOL in Rust, we'll use any for flexibility

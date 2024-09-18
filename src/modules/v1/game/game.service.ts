@@ -110,9 +110,42 @@ export class GameService {
 
     const result = this.evaluateGuess(session.kol, guess, gameType);
 
-    this.updateGuesses(session, gameType, guess, result);
-    this.updateScore(session, guessesField, scoreField);
-    this.updateCompletionStatus(session, gameType, result, guess);
+    const updateStuff = async (
+      session,
+      gameType,
+      guess,
+      result,
+      guessesField,
+      scoreField,
+    ) => {
+      try {
+        const guesses = gameType === 1 ? 'game1Guesses' : 'game2Guesses';
+        const guessLength = session[guesses].length;
+        await this.updateGuesses(session, gameType, guess, result);
+        // Check if the guess was successfully added to the session
+        console.log(guessLength, session.game1Guesses.length);
+        if (session[guesses]?.length !== guessLength + 1) {
+          throw new HttpException(
+            `Failed to add guess to session for Game ${gameType}. I don't know why`,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+          );
+        }
+        await this.updateScore(session, guessesField, scoreField);
+
+        await this.updateCompletionStatus(session, gameType, result, guess);
+      } catch (error) {
+        console.error('Error updating session:', error);
+        throw error;
+      }
+    };
+    await updateStuff(
+      session,
+      gameType,
+      guess,
+      result,
+      guessesField,
+      scoreField,
+    );
 
     await session.save();
 
@@ -124,7 +157,7 @@ export class GameService {
         session[guessesField],
       );
     } catch (error) {
-      console.log(error);
+      console.error('Error submitting score to blockchain:', error);
       throw new HttpException(
         'Failed to submit score to blockchain:',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -134,7 +167,7 @@ export class GameService {
     return session;
   }
 
-  private updateGuesses(
+  private async updateGuesses(
     session: GameDocument,
     gameType: number,
     guess: any,
@@ -147,7 +180,7 @@ export class GameService {
     session[guessesCountField]++;
   }
 
-  private updateScore(
+  private async updateScore(
     session: GameDocument,
     guessesField: string,
     scoreField: string,
@@ -165,7 +198,7 @@ export class GameService {
     session.totalScore = session.game1Score + session.game2Score;
   }
 
-  private updateCompletionStatus(
+  private async updateCompletionStatus(
     session: GameDocument,
     gameType: number,
     result: any,
