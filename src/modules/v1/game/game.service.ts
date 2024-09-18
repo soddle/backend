@@ -173,7 +173,11 @@ export class GameService {
           )
         : (result as { result: boolean }).result;
     console.log('isCompleted', isCompleted);
-
+    console.log('score before calculation', session[scoreField]);
+    console.log(
+      Math.max(0, session[scoreField] - timePenalty - guessPenalty),
+      'score',
+    );
     const updatedSession = await this.gameModel.findByIdAndUpdate(
       sessionId,
       {
