@@ -164,7 +164,7 @@ export class GameService {
     // The penalty is 10 points per second, calculated by subtracting the game start time from the current time,
     // and then multiplying by 10.
     const timePenalty = Math.floor(
-      ((Date.now() - new Date(session.startTime).getTime()) / 1000) * 10,
+      ((Date.now() - new Date(session.startTime).getTime()) / 1000) * 5,
     );
     const guessPenalty = (session[guessesField] + 1) * 50; // +1 because we're adding a new guess
     console.log(Date.now(), 'Date.now()');
