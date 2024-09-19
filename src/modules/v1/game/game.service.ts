@@ -42,7 +42,7 @@ export class GameService {
       const newSession = new this.gameModel({
         player: playerPublicKey,
         gameType: body.gameType,
-        startTime: new Date(body.startTime),
+        startTime: new Date(parseInt(body.startTime)),
         game1Completed: body.game1Completed || false,
         game2Completed: body.game2Completed || false,
         game1Score: body.game1Score || 0,
