@@ -38,7 +38,12 @@ export class GameService {
       currentSession = await this.gameModel.findById(user.currentGameSession);
     }
     console.log(body);
-    if (!currentSession || currentSession.completed) {
+    if (
+      !currentSession ||
+      currentSession.completed ||
+      currentSession.game1Completed ||
+      currentSession.game2Completed
+    ) {
       const newSession = new this.gameModel({
         player: playerPublicKey,
         gameType: body.gameType,
