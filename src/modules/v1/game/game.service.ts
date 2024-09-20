@@ -164,7 +164,7 @@ export class GameService {
     // The penalty is 10 points per second, calculated by subtracting the game start time from the current time,
     // and then multiplying by 10.
     const timePenalty = Math.floor(
-      ((Date.now() - new Date(session.startTime).getTime()) / 1000),
+      ((Date.now() - new Date(session.startTime).getTime()) / 1000) * 5,
     );
     const guessPenalty = (session[guessesField] + 1) * 50; // +1 because we're adding a new guess
     console.log(Date.now(), 'Date.now()');
@@ -189,10 +189,7 @@ export class GameService {
         $push: { [guesses]: { guess, result } },
         $inc: { [guessesField]: 1 },
         $set: {
-          [scoreField]: Math.max(
-            0,
-            session[scoreField] - timePenalty - guessPenalty,
-          ),
+          [scoreField]: Math.max(0, 1000 - timePenalty - guessPenalty),
           [completedField]: isCompleted,
           completed:
             gameType === 1
@@ -237,6 +234,12 @@ export class GameService {
     guess: KOLDocument,
     gameType: number,
   ): Record<string, AttributeResult> | { kol: KOLDocument; result: boolean } {
+    console.log(actual.pfpType, 'actual.pfpType');
+    console.log(guess.pfpType, 'guess.pfpType');
+    console.log(
+      actual.pfpType === guess.pfpType,
+      'actual.pfpType===guess.pfpType',
+    );
     if (gameType === 1) {
       return {
         name:
@@ -254,7 +257,7 @@ export class GameService {
             ? AttributeResult.Correct
             : AttributeResult.Incorrect,
         pfpType:
-          actual.pfpType === guess.pfpType
+          actual.pfpType == guess.pfpType
             ? AttributeResult.Correct
             : AttributeResult.Incorrect,
 
