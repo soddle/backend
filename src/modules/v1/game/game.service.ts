@@ -166,10 +166,6 @@ export class GameService {
     const timePenalty = Math.floor(
       ((Date.now() - new Date(session.startTime).getTime()) / 1000) * 5,
     );
-    const guessPenalty = (session[guessesField] + 1) * 50; // +1 because we're adding a new guess
-    console.log(Date.now(), 'Date.now()');
-    console.log(timePenalty, 'timePenalty');
-    console.log(guessPenalty, 'guessPenalty');
 
     const isCompleted =
       gameType === 1
@@ -177,6 +173,13 @@ export class GameService {
             (r) => r === AttributeResult.Correct,
           )
         : (result as { result: boolean }).result;
+    const guessPenalty = isCompleted
+      ? session[guessesField] * 50
+      : (session[guessesField] + 1) * 50; // +1 because we're adding a new guess
+    console.log(guessPenalty, 'guessPenalty');
+    console.log(Date.now(), 'Date.now()');
+    console.log(timePenalty, 'timePenalty');
+
     console.log('isCompleted', isCompleted);
     console.log('score before calculation', session[scoreField]);
     console.log(
