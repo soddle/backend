@@ -215,6 +215,10 @@ export class GameService {
               timePenalty -
               guessPenalty,
           ),
+          mistakesCount: session.game1Guesses.length - 1,
+          timeInSeconds: Math.floor(
+            (Date.now() - new Date(session.startTime).getTime()) / 1000,
+          ),
         },
       },
       { new: true, runValidators: true },

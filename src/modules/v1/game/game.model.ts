@@ -43,6 +43,11 @@ export class Game {
 
   @Prop({ required: true, default: 0 })
   totalScore: number;
+  @Prop({ required: true, default: 0 })
+  timeInSeconds: number;
+
+  @Prop({ required: true, default: 0 })
+  mistakesCount: number;
 
   @Prop({ required: true, default: false })
   completed: boolean;
