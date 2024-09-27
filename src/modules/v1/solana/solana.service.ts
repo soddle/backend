@@ -49,14 +49,16 @@ export class SolanaService {
     this.program = new Program(idl, provider);
   }
 
-  @Cron('0 */24 * * *')
-  async handleCron() {
-    console.log('Called every day at midnight');
+  async initializeGame() {
     const [gameStatePDA] = PublicKey.findProgramAddressSync(
       [Buffer.from('game_state')],
       this.program.programId,
     );
-
+    const airdropSignature = await this.connection.requestAirdrop(
+      this.wallet.publicKey,
+      LAMPORTS_PER_SOL * 0.1,
+    );
+    
     try {
       const tx = await this.program.methods
         .initializeGame()
@@ -69,11 +71,18 @@ export class SolanaService {
 
       console.log('Game initialized. Transaction signature:', tx);
     } catch (error) {
+      console.log(error);
       throw new HttpException(
         'Error initializing game:',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  @Cron('0 */24 * * *')
+  async handleCron() {
+    console.log('Called every day at midnight');
+    await this.initializeGame();
   }
 
   async submitScore(
@@ -98,9 +107,7 @@ export class SolanaService {
       this.program.programId,
     );
     //@ts-expect-error  description of the error
-    const gameState = (await this.program.account.gameState.fetch(
-      gameStatePDA,
-    ))
+    const gameState = await this.program.account.gameState.fetch(gameStatePDA);
 
     const [gameSessionPDA] = PublicKey.findProgramAddressSync(
       [

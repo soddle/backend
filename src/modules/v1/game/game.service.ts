@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import mongoose, { Model, Mongoose } from 'mongoose';
 import { SolanaService } from '../solana/solana.service';
 import { KolService } from '../kol/kol.service';
 import { Game, GameDocument } from './game.model';
@@ -94,7 +94,7 @@ export class GameService {
     if (!user || !user.currentGameSession) {
       throw new NotFoundException('User has no active game session');
     }
-    const sessionId = user.currentGameSession;
+    const sessionId: mongoose.Schema.Types.ObjectId = user.currentGameSession;
 
     const session = await this.gameModel.findById(sessionId);
     if (!session) {
@@ -126,6 +126,16 @@ export class GameService {
         guessesField,
         scoreField,
       );
+      if (
+        updatedSession.completed ||
+        updatedSession.game1Completed ||
+        updatedSession.game2Completed
+      ) {
+        await this.userModel.findByIdAndUpdate(user.id, {
+          $push: { previousSessions: sessionId },
+          $set: { currentGameSession: null },
+        });
+      }
 
       await this.solanaService.submitScore(
         updatedSession.player,
@@ -144,7 +154,7 @@ export class GameService {
   }
 
   private async updateSessionWithGuess(
-    sessionId: string,
+    sessionId: mongoose.Schema.Types.ObjectId,
     gameType: number,
     guess: any,
     result: any,
@@ -216,6 +226,59 @@ export class GameService {
     }
 
     return updatedSession;
+  }
+  async getLeaderboardDetails(
+    leaderboardType: string,
+    gameType: number,
+  ): Promise<any[]> {
+    const currentDate = new Date();
+    let startDate;
+    switch (leaderboardType) {
+      case 'daily':
+        startDate = new Date(currentDate.setHours(0, 0, 0, 0));
+        break;
+      case 'weekly':
+        startDate = new Date(currentDate.setHours(0, 0, 0, 0));
+        startDate.setDate(currentDate.getDate() - currentDate.getDay() + 1);
+        break;
+      case 'monthly':
+        startDate = new Date(currentDate.setHours(0, 0, 0, 0));
+        startDate.setDate(1);
+        break;
+      default:
+        throw new Error('Invalid leaderboard type');
+    }
+    const leaderboard = await this.gameModel.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate },
+          game1Completed: true,
+          completed: true,
+          gameType: gameType,
+        },
+      },
+      {
+        $group: {
+          _id: '$player',
+          totalScore: { $sum: '$game1Score' },
+        },
+      },
+      {
+        $sort: { totalScore: -1 },
+      },
+      {
+        $limit: 100,
+      },
+      {
+        $project: {
+          _id: 0,
+          player: '$_id',
+          totalScore: 1,
+        },
+      },
+    ]);
+
+    return leaderboard;
   }
   getFollowerCountFromLabel(label: string): number {
     switch (label) {
