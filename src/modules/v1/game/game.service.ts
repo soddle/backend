@@ -8,7 +8,6 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model, Mongoose } from 'mongoose';
 import { SolanaService } from '../solana/solana.service';
-import { KolService } from '../kol/kol.service';
 import { Game, GameDocument } from './game.model';
 import { AttributeResult, KOL } from './game.type';
 import { KOLDocument } from '../kol/kol.model';
@@ -26,11 +25,10 @@ export class GameService {
     let user = await this.userModel.findOne({ publicKey: playerPublicKey });
 
     if (!user) {
-      user = new this.userModel({
+      user = await this.userModel.create({
         publicKey: playerPublicKey,
         currentGameSession: null,
       });
-      await user.save();
     }
 
     let currentSession;
@@ -58,11 +56,14 @@ export class GameService {
         completed: body.completed || false,
         score: body.score || 0,
         kol: body.kol || null,
+        previousGuesses: [],
         competitionId: body.competitionId || null,
         guesses: body.guesses || [],
       });
+      console.log(newSession)
       await newSession.save();
-      user.currentGameSession = newSession.id.toString();
+      user.currentGameSession = newSession.id;
+      
       await user.save();
       currentSession = newSession;
     } else {
@@ -78,6 +79,8 @@ export class GameService {
       currentSession.gameType = body.gameType;
       currentSession.startTime = new Date();
       await currentSession.save();
+      user.currentGameSession = currentSession._id;
+      await user.save();
     }
 
     return currentSession;
@@ -146,6 +149,7 @@ export class GameService {
 
       return updatedSession;
     } catch (error) {
+      console.log(error);
       throw new HttpException(
         'Failed to update session or submit score to blockchain',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -304,7 +308,7 @@ export class GameService {
     guess: KOLDocument,
     gameType: number,
   ): Record<string, AttributeResult> | { kol: KOLDocument; result: boolean } {
-    console.log(actual.pfpType, 'actual.pfpType');
+    const actualPfpType = console.log(actual.pfpType, 'actual.pfpType');
     console.log(guess.pfpType, 'guess.pfpType');
     console.log(
       actual.pfpType === guess.pfpType,

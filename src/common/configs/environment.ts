@@ -27,6 +27,9 @@ export interface IEnvironment {
   MORALIS: {
     API_KEY: string;
   };
+  AUTHORITY: {
+    PRIVATE_KEY: string;
+  };
 }
 
 export const ENVIRONMENT: IEnvironment = {
@@ -54,5 +57,8 @@ export const ENVIRONMENT: IEnvironment = {
   },
   MORALIS: {
     API_KEY: process.env.MORALIS_API_KEY,
-  }
+  },
+  AUTHORITY: {
+    PRIVATE_KEY: process.env.AUTHORITY_PRIVATE_KEY,
+  },
 };

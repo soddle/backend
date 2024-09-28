@@ -20,6 +20,8 @@ import {
 } from '@coral-xyz/anchor';
 import * as IDL from './idl/soddle_game.json'; //ll need to generate this IDL from your Rust program
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { ENVIRONMENT } from 'src/common/configs/environment';
+import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
 
 @Injectable()
 export class SolanaService {
@@ -34,8 +36,9 @@ export class SolanaService {
       'confirmed',
     );
 
-    // Initialize wallet (in production, you'd use a more secure way to manage keys)
-    const keypair = Keypair.generate();
+    const keypair = Keypair.fromSecretKey(
+      bs58.decode(ENVIRONMENT.AUTHORITY.PRIVATE_KEY),
+    );
     this.wallet = new Wallet(keypair);
 
     // Initialize Anchor provider
@@ -49,16 +52,14 @@ export class SolanaService {
     this.program = new Program(idl, provider);
   }
 
-  async initializeGame() {
+  @Cron('0 */24 * * *')
+  async handleCron() {
+    console.log('Called every day at midnight');
     const [gameStatePDA] = PublicKey.findProgramAddressSync(
       [Buffer.from('game_state')],
       this.program.programId,
     );
-    const airdropSignature = await this.connection.requestAirdrop(
-      this.wallet.publicKey,
-      LAMPORTS_PER_SOL * 0.1,
-    );
-    
+
     try {
       const tx = await this.program.methods
         .initializeGame()
@@ -77,12 +78,6 @@ export class SolanaService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-  }
-
-  @Cron('0 */24 * * *')
-  async handleCron() {
-    console.log('Called every day at midnight');
-    await this.initializeGame();
   }
 
   async submitScore(
@@ -117,15 +112,7 @@ export class SolanaService {
       ],
       this.program.programId,
     );
-    console.log(gameSessionPDA);
-    const airdropSignature = await this.connection.requestAirdrop(
-      this.wallet.publicKey,
-      LAMPORTS_PER_SOL,
-    );
-    const balanceAfterAirdrop = await this.connection.getBalance(
-      this.wallet.publicKey,
-    );
-    console.log(`Balance after airdrop: ${balanceAfterAirdrop}`);
+    console.log(gameSessionPDA, 'gameSessionPda');
     try {
       const tx = await this.program.methods
         .submitScore(gameType, score, guesses)

@@ -24,5 +24,6 @@ export const RESPONSE_CONSTANT = {
   GAME: {
     START_GAME_SUCCESS: 'Game Started Successfully',
     GET_GAME_SUCCESS: 'Game Retrieved Successfully',
+    GET_LEADERBOARD_SUCCESS: 'Leaderboard Retrieved Successfully',
   },
 };
