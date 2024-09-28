@@ -326,10 +326,9 @@ export class GameService {
           actual.country === guess.country
             ? AttributeResult.Correct
             : AttributeResult.Incorrect,
-        pfpType:
-          actual.pfpType == guess.pfpType
-            ? AttributeResult.Correct
-            : AttributeResult.Incorrect,
+        pfpType: actual.pfpType.includes(guess.pfpType)
+          ? AttributeResult.Correct
+          : AttributeResult.Incorrect,
 
         account_creation:
           actual.accountCreation === guess.accountCreation
@@ -343,10 +342,9 @@ export class GameService {
             : actual.followers > guess.followers
               ? AttributeResult.Higher
               : AttributeResult.Lower,
-        ecosystem:
-          actual.ecosystem === guess.ecosystem
-            ? AttributeResult.Correct
-            : AttributeResult.Incorrect,
+        ecosystem: actual.ecosystem.includes(guess.ecosystem)
+          ? AttributeResult.Correct
+          : AttributeResult.Incorrect,
       };
     } else if (gameType === 2) {
       return {
