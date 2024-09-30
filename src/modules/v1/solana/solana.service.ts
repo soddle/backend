@@ -1,8 +1,4 @@
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
   Connection,
   PublicKey,
@@ -27,6 +23,8 @@ export class SolanaService {
   private connection: Connection;
   private program: Program;
   private wallet: Wallet;
+  private gameStatePDA: PublicKey;
+  private gameState: any;
 
   constructor() {
     // Initialize Solana connection (use your preferred RPC URL)
@@ -49,6 +47,20 @@ export class SolanaService {
     // Initialize the program
     const idl = IDL as Idl;
     this.program = new Program(idl, provider);
+
+    // Derive PDAs
+    this.gameStatePDA = PublicKey.findProgramAddressSync(
+      [Buffer.from('game_state')],
+      this.program.programId,
+    )[0];
+    //@ts-expect-error  description of the error
+    this.program.account.gameState.fetch(this.gameStatePDA)
+      .then((gameState) => {
+        this.gameState = gameState;
+      })
+      .catch((error) => {
+        console.error('Error fetching game state:', error);
+      });
   }
 
   @Cron('0 */24 * * *')
@@ -87,31 +99,14 @@ export class SolanaService {
   ): Promise<string> {
     const player = new PublicKey(playerPublicKey);
 
-    type GameState = {
-      currentCompetition: {
-        id: string;
-        startTime: number;
-        endTime: number;
-      };
-      lastUpdateTime: number;
-    };
-    // Derive PDAs
-    const [gameStatePDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from('game_state')],
-      this.program.programId,
-    );
-    //@ts-expect-error  description of the error
-    const gameState = await this.program.account.gameState.fetch(gameStatePDA);
-
     const [gameSessionPDA] = PublicKey.findProgramAddressSync(
       [
         Buffer.from('game_session'),
         player.toBuffer(),
-        Buffer.from(gameState.currentCompetition.id),
+        Buffer.from(this.gameState.currentCompetition.id),
       ],
       this.program.programId,
     );
-    console.log(gameSessionPDA, 'gameSessionPda');
     try {
       const tx = await this.program.methods
         .submitScore(gameType, score, guesses)

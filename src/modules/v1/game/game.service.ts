@@ -7,18 +7,20 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import mongoose, { Model, Mongoose } from 'mongoose';
+import mongoose, { Model, Connection, Mongoose } from 'mongoose';
 import { SolanaService } from '../solana/solana.service';
 import { Game, GameDocument } from './game.model';
 import { AttributeResult, KOL } from './game.type';
 import { KOLDocument } from '../kol/kol.model';
 import { User, UserDocument } from './schemas/user.schema';
+import { InjectConnection } from '@nestjs/mongoose';
 
 @Injectable()
 export class GameService {
   constructor(
     @InjectModel(Game.name) private gameModel: Model<GameDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectConnection() private readonly connection: Connection,
     private solanaService: SolanaService,
   ) {}
 
@@ -94,90 +96,100 @@ export class GameService {
   }
 
   async makeGuess(gameType: number, userPublicKey: string, guess: any) {
-    const user = await this.userModel.findOne({ publicKey: userPublicKey });
-    if (!user || !user.currentGameSession) {
-      throw new NotFoundException('User has no active game session');
-    }
-    const sessionId: mongoose.Schema.Types.ObjectId = user.currentGameSession;
-
-    const session = await this.gameModel.findById(sessionId);
-    if (!session) {
-      throw new ConflictException('Invalid or completed game session');
-    }
-    if (
-      (gameType === 1 && session.game1Completed) ||
-      (gameType === 2 && session.game2Completed)
-    ) {
-      throw new ConflictException(
-        `Game session for Game ${gameType} already completed`,
-      );
-    }
-
-    const guessesField =
-      gameType == 1 ? 'game1GuessesCount' : 'game2GuessesCount';
-
-    const scoreField = gameType == 1 ? 'game1Score' : 'game2Score';
-    console.log('guessesField', guessesField);
-    console.log('scoreField', scoreField);
-    const result = this.evaluateGuess(session.kol, guess, gameType);
+    const session = await this.connection.startSession();
+    session.startTransaction();
 
     try {
+      const user = await this.userModel
+        .findOne({ publicKey: userPublicKey })
+        .session(session);
+      if (!user || !user.currentGameSession) {
+        throw new NotFoundException('User has no active game session');
+      }
+
+      const gameSession = await this.gameModel
+        .findById(user.currentGameSession)
+        .session(session);
+      if (!gameSession) {
+        throw new ConflictException('Invalid or completed game session');
+      }
+
+      if (
+        (gameType === 1 && gameSession.game1Completed) ||
+        (gameType === 2 && gameSession.game2Completed)
+      ) {
+        throw new ConflictException(
+          `Game session for Game ${gameType} already completed`,
+        );
+      }
+
+      const guessesField =
+        gameType === 1 ? 'game1GuessesCount' : 'game2GuessesCount';
+      const scoreField = gameType === 1 ? 'game1Score' : 'game2Score';
+
+      const result = this.evaluateGuess(gameSession.kol, guess, gameType);
+
       const updatedSession = await this.updateSessionWithGuess(
-        sessionId,
+        gameSession,
         gameType,
         guess,
         result,
         guessesField,
         scoreField,
       );
+
       if (
         updatedSession.completed ||
         updatedSession.game1Completed ||
         updatedSession.game2Completed
       ) {
-        await this.userModel.findByIdAndUpdate(user.id, {
-          $push: { previousSessions: sessionId },
-          $set: { currentGameSession: null },
-        });
+        await this.userModel
+          .updateOne(
+            { _id: user.id },
+            {
+              $push: { previousSessions: gameSession._id },
+              $set: { currentGameSession: null },
+            },
+          )
+          .session(session);
       }
 
-      await this.solanaService.submitScore(
+      // Submit score to blockchain and wait for the result
+      await this.submitScoreToBlockchain(
         updatedSession.player,
         gameType,
         updatedSession[scoreField],
         updatedSession[guessesField],
       );
 
+      // If we reach here, everything was successful, so commit the transaction
+      await session.commitTransaction();
       return updatedSession;
     } catch (error) {
-      console.log(error);
+      // If any error occurs, abort the transaction
+      await session.abortTransaction();
+      console.error('Error in makeGuess:', error);
       throw new HttpException(
         'Failed to update session or submit score to blockchain',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    } finally {
+      // End the session
+      session.endSession();
     }
   }
 
   private async updateSessionWithGuess(
-    sessionId: mongoose.Schema.Types.ObjectId,
+    session: any,
     gameType: number,
     guess: any,
     result: any,
     guessesField: string,
     scoreField: string,
   ) {
-    const guesses = gameType == 1 ? 'game1Guesses' : 'game2Guesses';
-    const completedField = gameType == 1 ? 'game1Completed' : 'game2Completed';
-    console.log('guesses', guesses);
-    console.log('completedField', completedField);
-    const session = await this.gameModel.findById(sessionId);
-    if (!session) {
-      throw new NotFoundException('Game session not found');
-    }
+    const guesses = gameType === 1 ? 'game1Guesses' : 'game2Guesses';
+    const completedField = gameType === 1 ? 'game1Completed' : 'game2Completed';
 
-    // Calculate the time penalty in points, based on the elapsed time since the game started.
-    // The penalty is 10 points per second, calculated by subtracting the game start time from the current time,
-    // and then multiplying by 10.
     const timePenalty = Math.floor(
       ((Date.now() - new Date(session.startTime).getTime()) / 1000) * 5,
     );
@@ -188,53 +200,82 @@ export class GameService {
             (r) => r === AttributeResult.Correct,
           )
         : (result as { result: boolean }).result;
+
     const guessPenalty = isCompleted
       ? session[guessesField] * 50
-      : (session[guessesField] + 1) * 50; // +1 because we're adding a new guess
-    console.log(guessPenalty, 'guessPenalty');
-    console.log(Date.now(), 'Date.now()');
-    console.log(timePenalty, 'timePenalty');
+      : (session[guessesField] + 1) * 50;
 
-    console.log('isCompleted', isCompleted);
-    console.log('score before calculation', session[scoreField]);
-    console.log(
-      Math.max(0, session[scoreField] - timePenalty - guessPenalty),
-      'score',
+    const newScore = Math.max(0, 1000 - timePenalty - guessPenalty);
+    const newTotalScore = Math.max(
+      0,
+      session.game1Score + session.game2Score - timePenalty - guessPenalty,
     );
-    const updatedSession = await this.gameModel.findByIdAndUpdate(
-      sessionId,
-      {
-        $push: { [guesses]: { guess, result } },
-        $inc: { [guessesField]: 1 },
-        $set: {
-          [scoreField]: Math.max(0, 1000 - timePenalty - guessPenalty),
-          [completedField]: isCompleted,
-          completed:
-            gameType === 1
-              ? isCompleted && session.game2Completed
-              : session.game1Completed && isCompleted,
-          totalScore: Math.max(
-            0,
-            session.game1Score +
-              session.game2Score -
-              timePenalty -
-              guessPenalty,
-          ),
-          mistakesCount: session.game1Guesses.length - 1,
-          timeInSeconds: Math.floor(
-            (Date.now() - new Date(session.startTime).getTime()) / 1000,
-          ),
-        },
+
+    const updateObject = {
+      $push: { [guesses]: { guess, result } },
+      $inc: { [guessesField]: 1 },
+      $set: {
+        [scoreField]: newScore,
+        [completedField]: isCompleted,
+        completed:
+          gameType === 1
+            ? isCompleted && session.game2Completed
+            : session.game1Completed && isCompleted,
+        totalScore: newTotalScore,
+        mistakesCount: session[guesses].length,
+        timeInSeconds: Math.floor(
+          (Date.now() - new Date(session.startTime).getTime()) / 1000,
+        ),
       },
+    };
+
+    const updatedSession = await this.gameModel.findByIdAndUpdate(
+      session._id,
+      updateObject,
       { new: true, runValidators: true },
     );
 
     if (!updatedSession) {
-      console.log('updated sessionid', updatedSession.id);
-      console.log('error', 'Failed to update session');
+      throw new Error('Failed to update session');
     }
 
     return updatedSession;
+  }
+
+  private async submitScoreToBlockchain(
+    player: string,
+    gameType: number,
+    score: number,
+    guessesCount: number,
+  ) {
+    const maxRetries = 3;
+    let retries = 0;
+
+    while (retries < maxRetries) {
+      try {
+        await this.solanaService.submitScore(
+          player,
+          gameType,
+          score,
+          guessesCount,
+        );
+        console.log(`Score submitted successfully for player ${player}`);
+        return; // Success, exit the function
+      } catch (error) {
+        console.error(
+          `Error submitting score to blockchain (attempt ${retries + 1}):`,
+          error,
+        );
+        retries++;
+        if (retries >= maxRetries) {
+          throw new Error(
+            'Failed to submit score to blockchain after multiple attempts',
+          );
+        }
+        // Wait for a short time before retrying
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retries));
+      }
+    }
   }
 
   async getLeaderboardDetails(
