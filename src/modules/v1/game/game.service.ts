@@ -1,3 +1,4 @@
+import { PipelineStage } from 'mongoose';
 import {
   ConflictException,
   HttpException,
@@ -60,10 +61,10 @@ export class GameService {
         competitionId: body.competitionId || null,
         guesses: body.guesses || [],
       });
-      console.log(newSession)
+      console.log(newSession);
       await newSession.save();
       user.currentGameSession = newSession.id;
-      
+
       await user.save();
       currentSession = newSession;
     } else {
@@ -235,40 +236,62 @@ export class GameService {
 
     return updatedSession;
   }
+
   async getLeaderboardDetails(
     leaderboardType: string,
     gameType: number,
   ): Promise<any[]> {
+    console.log(
+      `Starting getLeaderboardDetails with leaderboardType: ${leaderboardType}, gameType: ${gameType}`,
+    );
+
+    let startDate: Date | null = null;
     const currentDate = new Date();
-    let startDate;
+
     switch (leaderboardType) {
       case 'daily':
         startDate = new Date(currentDate.setHours(0, 0, 0, 0));
         break;
       case 'weekly':
         startDate = new Date(currentDate.setHours(0, 0, 0, 0));
-        startDate.setDate(currentDate.getDate() - currentDate.getDay() + 1);
+        startDate.setDate(currentDate.getDate() - currentDate.getDay());
         break;
       case 'monthly':
-        startDate = new Date(currentDate.setHours(0, 0, 0, 0));
-        startDate.setDate(1);
+        startDate = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          1,
+        );
+        break;
+      case 'alltime':
+        // For all-time, we don't set a start date
         break;
       default:
+        console.error(`Invalid leaderboard type: ${leaderboardType}`);
         throw new Error('Invalid leaderboard type');
     }
-    const leaderboard = await this.gameModel.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: startDate },
-          game1Completed: true,
-          completed: true,
-          gameType: gameType,
-        },
+
+    console.log(`Calculated startDate: ${startDate}`);
+
+    const matchStage: PipelineStage.Match = {
+      $match: {
+        gameType: gameType,
+        game1Completed: true,
       },
+    };
+
+    // Only add the startTime condition if it's not an all-time leaderboard
+    if (startDate) {
+      matchStage.$match.startTime = { $gte: startDate };
+    }
+
+    const pipeline: PipelineStage[] = [
+      matchStage,
       {
         $group: {
           _id: '$player',
           totalScore: { $sum: '$game1Score' },
+          gamesPlayed: { $sum: 1 },
         },
       },
       {
@@ -282,11 +305,60 @@ export class GameService {
           _id: 0,
           player: '$_id',
           totalScore: 1,
+          gamesPlayed: 1,
         },
       },
-    ]);
+    ];
 
-    return leaderboard;
+    console.log('Aggregation pipeline:', JSON.stringify(pipeline, null, 2));
+
+    try {
+      const leaderboard = await this.gameModel.aggregate(pipeline);
+      console.log(`Leaderboard results count: ${leaderboard.length}`);
+
+      if (leaderboard.length === 0) {
+        console.log('Leaderboard is empty. Performing additional checks...');
+
+        const totalDocuments = await this.gameModel.countDocuments();
+        console.log(`Total documents in the collection: ${totalDocuments}`);
+
+        const documentsMatchingGameType = await this.gameModel.countDocuments({
+          gameType: gameType,
+          game1Completed: true,
+        });
+        console.log(
+          `Completed games of type ${gameType}: ${documentsMatchingGameType}`,
+        );
+
+        if (startDate) {
+          const documentsInDateRange = await this.gameModel.countDocuments({
+            startTime: { $gte: startDate },
+            gameType: gameType,
+            game1Completed: true,
+          });
+          console.log(
+            `Documents within date range and matching criteria: ${documentsInDateRange}`,
+          );
+        }
+
+        const sampleDocuments = await this.gameModel
+          .find({
+            gameType: gameType,
+            game1Completed: true,
+          })
+          .limit(5)
+          .lean();
+        console.log(
+          'Sample documents:',
+          JSON.stringify(sampleDocuments, null, 2),
+        );
+      }
+
+      return leaderboard;
+    } catch (error) {
+      console.error('Error in aggregation:', error);
+      throw error;
+    }
   }
   getFollowerCountFromLabel(label: string): number {
     switch (label) {

@@ -44,15 +44,16 @@ export class GameController {
     return this.gameService.getUserDetails(publicKey);
   }
 
-  @Get('/:publicKey')
-  @ResponseMessage(RESPONSE_CONSTANT.GAME.GET_GAME_SUCCESS)
-  async getGame(@Param('publicKey') publicKey: string) {
-    return this.gameService.getCurrentGameSession(publicKey);
-  }
-
+  
   @Get('/leaderboard')
   @ResponseMessage(RESPONSE_CONSTANT.GAME.GET_LEADERBOARD_SUCCESS)
   async getLeaderboard(@Body() body) {
     return this.gameService.getLeaderboardDetails(body.leaderboardType, body.gameType);
+  }
+  
+  @Get('/:publicKey')
+  @ResponseMessage(RESPONSE_CONSTANT.GAME.GET_GAME_SUCCESS)
+  async getGame(@Param('publicKey') publicKey: string) {
+    return this.gameService.getCurrentGameSession(publicKey);
   }
 }
