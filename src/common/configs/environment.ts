@@ -30,6 +30,14 @@ export interface IEnvironment {
   AUTHORITY: {
     PRIVATE_KEY: string;
   };
+  RPC: {
+    SOLANA: {
+      URL: string;
+    };
+    ECLIPSE: {
+      URL: string;
+    };
+  };
 }
 
 export const ENVIRONMENT: IEnvironment = {
@@ -54,6 +62,14 @@ export const ENVIRONMENT: IEnvironment = {
   },
   APITOOLKIT: {
     API_KEY: process.env.APITOOLKIT_API_KEY,
+  },
+  RPC: {
+    SOLANA: {
+      URL: process.env.SOLANA_RPC_URL,
+    },
+    ECLIPSE: {
+      URL: process.env.ECLIPSE_RPC_URL,
+    }
   },
   MORALIS: {
     API_KEY: process.env.MORALIS_API_KEY,

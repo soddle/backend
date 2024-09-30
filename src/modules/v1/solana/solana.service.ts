@@ -32,7 +32,7 @@ export class SolanaService {
   constructor() {
     // Initialize Solana connection (use your preferred RPC URL)
     this.connection = new Connection(
-      'https://staging-rpc.dev2.eclipsenetwork.xyz',
+      `https://devnet.helius-rpc.com/?api-key=${ENVIRONMENT.RPC.SOLANA.URL}`,
       'confirmed',
     );
 
