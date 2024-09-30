@@ -5,6 +5,7 @@ import {
   UseInterceptors,
   Param,
   Get,
+  Query,
 } from '@nestjs/common';
 import { GameService } from './game.service';
 import { RESPONSE_CONSTANT } from 'src/common/constants/response.constant';
@@ -44,13 +45,15 @@ export class GameController {
     return this.gameService.getUserDetails(publicKey);
   }
 
-  
   @Get('/leaderboard')
   @ResponseMessage(RESPONSE_CONSTANT.GAME.GET_LEADERBOARD_SUCCESS)
-  async getLeaderboard(@Body() body) {
-    return this.gameService.getLeaderboardDetails(body.leaderboardType, body.gameType);
+  async getLeaderboard(@Query() body) {
+    return this.gameService.getLeaderboardDetails(
+      body.leaderboardType,
+      body.gameType,
+    );
   }
-  
+
   @Get('/:publicKey')
   @ResponseMessage(RESPONSE_CONSTANT.GAME.GET_GAME_SUCCESS)
   async getGame(@Param('publicKey') publicKey: string) {

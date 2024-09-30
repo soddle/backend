@@ -2,7 +2,6 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
-  OnModuleInit,
 } from '@nestjs/common';
 import {
   Connection,
@@ -19,7 +18,7 @@ import {
   Idl,
 } from '@coral-xyz/anchor';
 import * as IDL from './idl/soddle_game.json'; //ll need to generate this IDL from your Rust program
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { ENVIRONMENT } from 'src/common/configs/environment';
 import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
 
