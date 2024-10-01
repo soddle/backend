@@ -280,7 +280,7 @@ export class GameService {
 
   async getLeaderboardDetails(
     leaderboardType: string,
-    gameType: number,
+    gameType: string,
   ): Promise<any[]> {
     console.log(
       `Starting getLeaderboardDetails with leaderboardType: ${leaderboardType}, gameType: ${gameType}`,
@@ -316,7 +316,7 @@ export class GameService {
 
     const matchStage: PipelineStage.Match = {
       $match: {
-        gameType: gameType,
+        gameType: parseInt(gameType),
         game1Completed: true,
       },
     };
