@@ -16,20 +16,11 @@ export class KolService {
 
   modifyData(oldData) {
     return {
-      id: oldData._id,
-      name: oldData.name,
-      age: oldData.age,
-      twitterUsername: oldData.twitterHandle,
+      ...oldData,
       ageDisplay: `${Math.floor(oldData.age / 10) * 10 + 1}-${Math.floor(oldData.age / 10) * 10 + 10}`,
-      country: oldData.country,
       pfpType:
         oldData.pfpType === 'both' ? 'Artificial-Human' : oldData.pfpType,
-      pfp: oldData.pfp,
-      accountCreation: oldData.accountCreation,
-      followers: oldData.followers,
       followersDisplay: this.getFollowerRangeLabel(oldData.followers),
-      ecosystem: oldData.ecosystem,
-      tweets: oldData.tweets,
     };
   }
   getFollowerRangeLabel(followersCount: number): string {
@@ -42,14 +33,14 @@ export class KolService {
 
   async findAll(): Promise<any[]> {
     const newKols = await this.kolModel.find({});
-    const kols = newKols.map((kol) => this.modifyData(kol));
+    const kols = newKols.map((kol) => this.modifyData(kol.toJSON()));
     return kols;
   }
 
   async getRandomKol(): Promise<Partial<Kol>> {
     const aggregation = [{ $sample: { size: 1 } }];
     const [randomKol] = await this.kolModel.aggregate(aggregation);
-    return this.modifyData(randomKol);
+    return this.modifyData(randomKol.toJSON());
   }
 
   async getRandomTweet(

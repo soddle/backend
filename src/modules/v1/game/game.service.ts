@@ -297,6 +297,10 @@ export class GameService {
         startDate = new Date(currentDate.setHours(0, 0, 0, 0));
         startDate.setDate(currentDate.getDate() - currentDate.getDay());
         break;
+      case 'yesterday':
+        startDate = new Date(currentDate.setHours(0, 0, 0, 0));
+        startDate.setDate(currentDate.getDate() - 1);
+        break;
       case 'monthly':
         startDate = new Date(
           currentDate.getFullYear(),
