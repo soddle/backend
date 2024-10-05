@@ -19,7 +19,7 @@ export class KolService {
       id: oldData._id,
       name: oldData.name,
       age: oldData.age,
-      twitterUsername: oldData.twitterUsername,
+      twitterUsername: oldData.twitterHandle,
       ageDisplay: `${Math.floor(oldData.age / 10) * 10 + 1}-${Math.floor(oldData.age / 10) * 10 + 10}`,
       country: oldData.country,
       pfpType:
