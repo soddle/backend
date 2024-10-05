@@ -40,7 +40,7 @@ export class KolService {
   async getRandomKol(): Promise<Partial<Kol>> {
     const aggregation = [{ $sample: { size: 1 } }];
     const [randomKol] = await this.kolModel.aggregate(aggregation);
-    return this.modifyData(randomKol.toJSON());
+    return this.modifyData(randomKol);
   }
 
   async getRandomTweet(
