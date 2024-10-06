@@ -12,7 +12,7 @@ export class KolService {
     // const newKols = [/* array of new KOL data */];
     await this.kolModel.deleteMany({});
     return await this.kolModel.insertMany(dailyKols);
-  },
+  }
 
   modifyData(oldData) {
     return {
