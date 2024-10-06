@@ -39,6 +39,10 @@ export class GameService {
       currentSession = await this.gameModel.findById(user.currentGameSession);
     }
     console.log(body);
+
+    if (!body.kol.pfpType) {
+      throw new ConflictException("sGame KOL doesn't have a pfpType");
+    }
     if (
       !currentSession ||
       currentSession.completed ||
