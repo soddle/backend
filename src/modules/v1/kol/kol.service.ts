@@ -12,11 +12,12 @@ export class KolService {
     // const newKols = [/* array of new KOL data */];
     await this.kolModel.deleteMany({});
     return await this.kolModel.insertMany(dailyKols);
-  }
+  },
 
   modifyData(oldData) {
     return {
       ...oldData,
+      id: oldData._id,
       ageDisplay: `${Math.floor(oldData.age / 10) * 10 + 1}-${Math.floor(oldData.age / 10) * 10 + 10}`,
       pfpType:
         oldData.pfpType === 'both' ? 'Artificial-Human' : oldData.pfpType,
