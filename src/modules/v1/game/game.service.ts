@@ -411,16 +411,8 @@ export class GameService {
   }
   getFollowerCountFromLabel(label: string): number {
     switch (label) {
-      case 'over 5M':
-        return 5000000;
-      case '3-5M':
-        return 4000000; // Assuming the midpoint of the range
-      case '2-3M':
-        return 2500000; // Assuming the midpoint of the range
-      case '1-2M':
-        return 1500000; // Assuming the midpoint of the range
-      case '500k-1M':
-        return 750000; // Assuming the midpoint of the range
+      case 'over 500k':
+        return 500000;
       case '300k-500k':
         return 400000; // Assuming the midpoint of the range
       case '200k-300k':
@@ -430,7 +422,7 @@ export class GameService {
       case '50k-100k':
         return 75000; // Assuming the midpoint of the range
       default:
-        return 20000; // Assuming the midpoint of the range '0-50k'
+        return 25000; // Assuming the midpoint of the range '0-50k'
     }
   }
 
@@ -467,9 +459,10 @@ export class GameService {
           actual.country === guess.country
             ? AttributeResult.Correct
             : AttributeResult.Incorrect,
-        pfpType: actual.pfpType.includes(guess.pfpType)
-          ? AttributeResult.Correct
-          : AttributeResult.Incorrect,
+        pfpType:
+          actual.pfpType == guess.pfpType
+            ? AttributeResult.Correct
+            : AttributeResult.Incorrect,
 
         account_creation:
           actual.accountCreation === guess.accountCreation
