@@ -463,7 +463,7 @@ export class GameService {
             ? AttributeResult.Correct
             : AttributeResult.Incorrect,
         pfpType:
-          actual.pfpType.toLowerCase() === guess.pfpType.toLowerCase()
+          actual.pfpType === guess.pfpType
             ? AttributeResult.Correct
             : AttributeResult.Incorrect,
 
