@@ -438,10 +438,13 @@ export class GameService {
       'actual.pfpType===guess.pfpType',
     );
     function isWordIncluded(word1, word2) {
-      const lowerWord1 = word1.toLowerCase();
-      const lowerWord2 = word2.toLowerCase();
-      return lowerWord1.includes(lowerWord2) || lowerWord2.includes(lowerWord1);
+      const actual = word1.toLowerCase();
+      const guess = word2.toLowerCase();
+      return (
+        actual.includes(guess) || guess.includes(actual) || actual === guess
+      );
     }
+    console.log(`${guess.pfpType} is included in ${actual.pfpType}`);
 
     if (gameType === 1) {
       return {
