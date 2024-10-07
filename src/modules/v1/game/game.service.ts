@@ -445,6 +445,12 @@ export class GameService {
       actual.pfpType === guess.pfpType,
       'actual.pfpType===guess.pfpType',
     );
+    function isWordIncluded(word1, word2) {
+      const lowerWord1 = word1.toLowerCase();
+      const lowerWord2 = word2.toLowerCase();
+      return lowerWord1.includes(lowerWord2) || lowerWord2.includes(lowerWord1);
+    }
+
     if (gameType === 1) {
       return {
         name:
@@ -477,7 +483,7 @@ export class GameService {
             : actual.followers > guess.followers
               ? AttributeResult.Higher
               : AttributeResult.Lower,
-        ecosystem: actual.ecosystem.includes(guess.ecosystem)
+        ecosystem: isWordIncluded(actual.ecosystem, guess.ecosystem)
           ? AttributeResult.Correct
           : AttributeResult.Incorrect,
       };
