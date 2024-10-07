@@ -434,8 +434,12 @@ export class GameService {
     const actualPfpType = console.log(actual.pfpType, 'actual.pfpType');
     console.log(guess.pfpType, 'guess.pfpType');
     console.log(
-      actual.pfpType === guess.pfpType,
       'actual.pfpType===guess.pfpType',
+      `${
+        actual.pfpType === guess.pfpType
+          ? AttributeResult.Correct
+          : AttributeResult.Incorrect
+      }`,
     );
     function isWordIncluded(word1, word2) {
       const actual = word1.toLowerCase();
