@@ -446,7 +446,7 @@ export class GameService {
     if (gameType === 1) {
       return {
         name:
-          actual.name === guess.name
+          actual.name.toLowerCase() === guess.name.toLowerCase()
             ? AttributeResult.Correct
             : AttributeResult.Incorrect,
         age:
@@ -456,11 +456,11 @@ export class GameService {
               ? AttributeResult.Higher
               : AttributeResult.Lower,
         country:
-          actual.country === guess.country
+          actual.country.toLowerCase() === guess.country.toLowerCase()
             ? AttributeResult.Correct
             : AttributeResult.Incorrect,
         pfpType:
-          actual.pfpType === guess.pfpType
+          actual.pfpType.toLowerCase() === guess.pfpType.toLowerCase()
             ? AttributeResult.Correct
             : AttributeResult.Incorrect,
 
