@@ -1,5 +1,5 @@
 {
-  "address": "9oHdf9UFE9zbQPUDiBn27qX9Rqc7fVEpHSdxVpkwx6z4",
+  "address": "8buzRBsMxWpYvLpxqSNogsdP7reUGRNFR8EEUkZZ9c33",
   "metadata": {
     "name": "soddle_game",
     "version": "0.1.0",
@@ -441,6 +441,10 @@
           },
           {
             "name": "country",
+            "type": "string"
+          },
+          {
+            "name": "pfp_type",
             "type": "string"
           },
           {
