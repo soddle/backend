@@ -54,7 +54,8 @@ export class SolanaService {
       this.program.programId,
     )[0];
     //@ts-expect-error  description of the error
-    this.program.account.gameState.fetch(this.gameStatePDA)
+    this.program.account.gameState
+      .fetch(this.gameStatePDA)
       .then((gameState) => {
         this.gameState = gameState;
       })
@@ -106,6 +107,16 @@ export class SolanaService {
         Buffer.from(this.gameState.currentCompetition.id),
       ],
       this.program.programId,
+    );
+    console.log(gameSessionPDA)
+    // @ts-ignore
+    const gameSession = this.program.account.gameSession.fetch(gameSessionPDA);
+    console.log(gameSession)
+    console.log(gameType, score, guesses);
+    console.log(
+      gameSessionPDA.toBase58,
+      player.toBase58,
+      this.wallet.publicKey,
     );
     try {
       const tx = await this.program.methods
