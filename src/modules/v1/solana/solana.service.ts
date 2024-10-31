@@ -64,7 +64,14 @@ export class SolanaService {
       });
   }
 
-  @Cron('0 */24 * * *')
+  // Modified the cron expression to start the game every day at 3pm GMT
+  // '0 15 * * *' breaks down as:
+  //  - 0: minute 0 (i.e., the top of the hour)
+  //  - 15: hour 15 (i.e., 3pm in 24-hour format)
+  //  - *: any day of the month
+  //  - *: any month
+  //  - *: any day of the week
+  @Cron('0 15 * * *')
   async handleCron() {
     console.log('Called every day at midnight');
     const [gameStatePDA] = PublicKey.findProgramAddressSync(
