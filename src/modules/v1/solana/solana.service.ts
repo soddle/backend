@@ -25,6 +25,8 @@ export class SolanaService {
   private wallet: Wallet;
   private gameStatePDA: PublicKey;
   private gameState: any;
+  private SODDLE_WALLET: PublicKey;
+  private REWARD_DISTRIBUTION_VAULT: PublicKey;
 
   constructor() {
     // Initialize Solana connection (use your preferred RPC URL)
@@ -47,6 +49,13 @@ export class SolanaService {
     // Initialize the program
     const idl = IDL as Idl;
     this.program = new Program(idl, provider);
+
+    this.SODDLE_WALLET = new PublicKey(
+      'Bq8t4M2n7eE1AU3AJvjWP6dawJbsALwPTx631Ld59JUF',
+    );
+    this.REWARD_DISTRIBUTION_VAULT = new PublicKey(
+      'Bq8t4M2n7eE1AU3AJvjWP6dawJbsALwPTx631Ld59JUF',
+    );
 
     // Derive PDAs
     this.gameStatePDA = PublicKey.findProgramAddressSync(
@@ -71,11 +80,15 @@ export class SolanaService {
   //  - *: any day of the month
   //  - *: any month
   //  - *: any day of the week
-  @Cron('0 15 * * *')
+  @Cron('0 16 * * *')
   async handleCron() {
     console.log('Called every day at midnight');
     const [gameStatePDA] = PublicKey.findProgramAddressSync(
       [Buffer.from('game_state')],
+      this.program.programId,
+    );
+    const [vaultPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('vault')],
       this.program.programId,
     );
 
@@ -90,6 +103,20 @@ export class SolanaService {
         .rpc();
 
       console.log('Game initialized. Transaction signature:', tx);
+
+      const distributionTx = await this.program.methods
+        .distributeFunds()
+        .accounts({
+          authority: this.wallet.publicKey,
+          vault: vaultPda,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      console.log(
+        'Game rewards distributed. Transaction signature:',
+        distributionTx,
+      );
     } catch (error) {
       console.log(error);
       throw new HttpException(
@@ -115,10 +142,10 @@ export class SolanaService {
       ],
       this.program.programId,
     );
-    console.log(gameSessionPDA)
+    console.log(gameSessionPDA);
     // @ts-ignore
     const gameSession = this.program.account.gameSession.fetch(gameSessionPDA);
-    console.log(gameSession)
+    console.log(gameSession);
     console.log(gameType, score, guesses);
     console.log(
       gameSessionPDA.toBase58,
@@ -138,6 +165,7 @@ export class SolanaService {
         .rpc();
 
       console.log('Final score submitted. Transaction signature:', tx);
+
       return tx;
     } catch (error) {
       console.log(error);

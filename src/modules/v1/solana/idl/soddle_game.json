@@ -1,5 +1,5 @@
 {
-  "address": "4DJ2RtFHVUNgtZTNhioSBHnKqUqBeCbHfy6L1z6HqkjZ",
+  "address": "2y7L42gHKEBAFprVLJ9XFQuzxLdT9dmptdgQsNdcJ4SP",
   "metadata": {
     "name": "soddle_game",
     "version": "0.1.0",
@@ -7,6 +7,59 @@
     "description": "Created with Anchor"
   },
   "instructions": [
+    {
+      "name": "distribute_funds",
+      "discriminator": [
+        124,
+        82,
+        187,
+        45,
+        224,
+        209,
+        31,
+        156
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "soddle_wallet",
+          "writable": true,
+          "address": "7Uo97cVpoRvP72iVMsgdcJD8dSBGvyoNT1jz49zmgYva"
+        },
+        {
+          "name": "reward_wallet",
+          "writable": true,
+          "address": "Bq8t4M2n7eE1AU3AJvjWP6dawJbsALwPTx631Ld59JUF"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
     {
       "name": "initialize_game",
       "discriminator": [
@@ -70,7 +123,26 @@
       "accounts": [
         {
           "name": "game_state",
-          "writable": true
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "game_session",
@@ -223,21 +295,6 @@
       ]
     }
   ],
-  "events": [
-    {
-      "name": "TweetGuessEvent",
-      "discriminator": [
-        106,
-        218,
-        51,
-        220,
-        57,
-        71,
-        34,
-        78
-      ]
-    }
-  ],
   "errors": [
     {
       "code": 6000,
@@ -303,6 +360,26 @@
       "code": 6012,
       "name": "InvalidPlayer",
       "msg": "This player is invalid"
+    },
+    {
+      "code": 6013,
+      "name": "UnauthorizedAuthority",
+      "msg": "Unauthorized authority"
+    },
+    {
+      "code": 6014,
+      "name": "AlreadyPlayedToday",
+      "msg": "Already played today"
+    },
+    {
+      "code": 6015,
+      "name": "MathOverflow",
+      "msg": "Math Overflow Distribution Error"
+    },
+    {
+      "code": 6016,
+      "name": "EmptyVault",
+      "msg": "Cannot distribute funds from an empty vault"
     }
   ],
   "types": [
@@ -461,22 +538,6 @@
           },
           {
             "name": "ecosystem",
-            "type": "string"
-          }
-        ]
-      }
-    },
-    {
-      "name": "TweetGuessEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "kol_id",
-            "type": "u32"
-          },
-          {
-            "name": "tweet",
             "type": "string"
           }
         ]
