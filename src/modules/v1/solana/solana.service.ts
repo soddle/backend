@@ -31,7 +31,7 @@ export class SolanaService {
   constructor() {
     // Initialize Solana connection (use your preferred RPC URL)
     this.connection = new Connection(
-      `https://mainnet.helius-rpc.com/?api-key=${ENVIRONMENT.RPC.SOLANA.URL}`,
+      `https://devnet.helius-rpc.com/?api-key=${ENVIRONMENT.RPC.SOLANA.URL}`,
       'confirmed',
     );
 
