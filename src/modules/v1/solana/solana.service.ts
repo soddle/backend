@@ -80,7 +80,7 @@ export class SolanaService {
   //  - *: any day of the month
   //  - *: any month
   //  - *: any day of the week
-  @Cron('0 16 * * *')
+  @Cron('20 15 * * *')
   async handleCron() {
     console.log('Called every day at midnight');
     const [gameStatePDA] = PublicKey.findProgramAddressSync(
