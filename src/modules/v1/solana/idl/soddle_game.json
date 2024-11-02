@@ -1,5 +1,5 @@
 {
-  "address": "BGnXsgfGZtbFgPXj5B5xK4artkcRmqxjiyNAHdzQWAf",
+  "address": "4gfUyKVg3zVuVYiZjRU3XB95oaNSBTafD8hNmUY36FoP",
   "metadata": {
     "name": "soddle_game",
     "version": "0.1.0",
@@ -380,6 +380,11 @@
       "code": 6016,
       "name": "EmptyVault",
       "msg": "Cannot distribute funds from an empty vault"
+    },
+    {
+      "code": 6017,
+      "name": "InsufficientFundsForRent",
+      "msg": "Insufficient funds to maintain rent exemption"
     }
   ],
   "types": [
